@@ -95,7 +95,7 @@ Power it on and observe:
 It follows the path and avoids obstacles
 It stops at intersections for boarding
 It logs and sends real-time GPS data to Firebase for tracking
-Note: The app integration is still in progress, but Firebase data can be accessed for vehicle location.
+Note: The app integration is still under development, but Firebase data can be accessed for vehicle location.
 🚀 Further Improvements
 
 PID Control for Smoother Navigation:
@@ -107,5 +107,8 @@ The obstacle detection system can be improved by adding more ultrasonic sensors 
 👨‍💻 Author
 
 Kishan Kumar
+Email: kishankumarrap@gmail.com
 GitHub: @kishanP2005-ship-IT
+
+
 
