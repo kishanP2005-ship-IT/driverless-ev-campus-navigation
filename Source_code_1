@@ -1,0 +1,148 @@
+// Motor control pins
+int ENA = 10;      // Enable pin for motor A
+int IN1 = 5;       // Motor A direction pin 1
+int IN2 = 4;       // Motor A direction pin 2
+int IN3 = 3;       // Motor B direction pin 1
+int IN4 = 2;       // Motor B direction pin 2
+int ENB = 9;       // Enable pin for motor B
+
+// Buzzer pin
+int buzzer = 8;
+
+// IR sensor pins
+int rightSensor = A0;
+int centerSensor = A1;
+int leftSensor = A2;
+
+// Ultrasonic sensor pins
+int trigPin = 6;
+int echoPin = 7;
+
+void setup() {
+  // Set motor pins as output
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(ENA, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  pinMode(ENB, OUTPUT);
+
+  // Set sensor pins
+  pinMode(leftSensor, INPUT);
+  pinMode(centerSensor, INPUT);
+  pinMode(rightSensor, INPUT);
+
+  // Set ultrasonic sensor pins
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  // Set buzzer pin
+  pinMode(buzzer, OUTPUT);
+
+  // Start serial communication for debugging
+  Serial.begin(9600); 
+
+  // Set initial motor speed
+  analogWrite(ENA, 100);
+  analogWrite(ENB, 100);
+  delay(200);
+}
+
+void loop() {
+  // Get distance from ultrasonic sensor
+  long distance = getDistance();
+
+  // Print distance to Serial Monitor
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  // If obstacle is very close
+  if (distance < 20) {
+    Stop();                    // Stop the motors
+    digitalWrite(buzzer, HIGH); // Turn on buzzer continuously
+    return;                    // Skip the rest of loop
+  } 
+  // If obstacle is moderately close
+  else if (distance < 40) {
+    digitalWrite(buzzer, HIGH);  // Beep
+    delay(100);
+    digitalWrite(buzzer, LOW);
+  } 
+  else {
+    digitalWrite(buzzer, LOW);   // No obstacle nearby, keep buzzer off
+  }
+
+  // Read sensor values
+  int left = digitalRead(leftSensor);
+  int center = digitalRead(centerSensor);
+  int right = digitalRead(rightSensor);
+
+  // Line following logic
+  if (left == 0 && center == 1 && right == 0) {
+    forward();  // Move forward if only center sees black line
+  } 
+  else if ((left == 1 && center == 1 && right == 0) || (left == 1 && center == 0 && right == 0)) {
+    turnRight();  // Turn right if line is on the left
+  } 
+  else if ((left == 0 && center == 1 && right == 1) || (left == 0 && center == 0 && right == 1)) {
+    turnLeft();   // Turn left if line is on the right
+  } 
+  else if (left == 1 && center == 1 && right == 1) {
+    Stop();         // All sensors see black, maybe junction or end
+    delay(3000);    // Pause
+    forward();      // Try to go forward
+    delay(4000);
+  }
+  else if(left == 0 && center == 0 && right == 0){
+    Stop();  // All sensors see white, vehicle is off the track
+  }
+}
+
+// Move forward function
+void forward() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+}
+
+// Turn right function
+void turnRight() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+}
+
+// Turn left function
+void turnLeft() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+}
+
+// Stop motors function
+void Stop() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+}
+
+// Function to get distance from ultrasonic sensor
+long getDistance() {
+  digitalWrite(trigPin, LOW);           // Clear the trigger pin
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);          // Send 10 microsecond pulse
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);           // Turn off trigger
+
+  long duration = pulseIn(echoPin, HIGH, 30000); // Wait for echo
+  if (duration == 0) return 999;        // Timeout: return large value
+
+  return duration * 0.034 / 2;          // Calculate distance in cm
+}
+
+
